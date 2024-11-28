@@ -1,53 +1,133 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HCDIV Assignment 4 </title>
-  <style>
-    /* Reset default styles */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Body and main container */
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #a9c0ee;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      overflow-x: hidden;
-    }
-
-    #content {
-      width: 90%;
-      max-width: 1000px;
-      padding: 40px;
-      background-color: #aec1ed;
-      border-radius: 12px;
-      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      overflow: hidden;
-      position: relative;
-      animation: slideIn 0.6s ease-out;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新加坡人口密度分布</title>
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 100vh;
+        }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+    </style>
 </head>
 <body>
+    <div id="map"></div>
 
-  <div id="content">
-    <h1>HCDIV Assignment 4 Singapore population choropleth</h1>
-    <h3>The assignment is being improved</h3>
-    <h5>Chen hongmei</h5>
-  </div>
+    <script>
+        var map = L.map('map').setView([1.3521, 103.8198], 11);
 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
+        function getColor(d) {
+            return d > 10000 ? '#800026' :
+                   d > 5000  ? '#BD0026' :
+                   d > 2000  ? '#E31A1C' :
+                   d > 1000  ? '#FC4E2A' :
+                   d > 500   ? '#FD8D3C' :
+                   d > 200   ? '#FEB24C' :
+                   d > 100   ? '#FED976' :
+                               '#FFEDA0';
+        }
 
+        function style(feature) {
+            return {
+                fillColor: getColor(feature.properties.density),
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+        }
+
+        function highlightFeature(e) {
+            var layer = e.target;
+            layer.setStyle({
+                weight: 5,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.7
+            });
+            info.update(layer.feature.properties);
+        }
+
+        function resetHighlight(e) {
+            geojsonLayer.resetStyle(e.target);
+            info.update();
+        }
+
+        function zoomToFeature(e) {
+            map.fitBounds(e.target.getBounds());
+        }
+
+        function onEachFeature(feature, layer) {
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: zoomToFeature
+            });
+        }
+
+        var info = L.control();
+
+        info.onAdd = function(map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+
+        info.update = function(props) {
+            this._div.innerHTML = '<h4>人口密度</h4>' +  (props ?
+                '<b>' + props.name + '</b><br />' + props.density + ' 人/平方公里'
+                : '悬停查看区域信息');
+        };
+
+        info.addTo(map);
+
+        fetch('singapore_regions.geojson')
+            .then(response => response.json())
+            .then(data => {
+                geojsonLayer = L.geoJson(data, {
+                    style: style,
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            });
+
+        var legend = L.control({ position: 'bottomright' });
+
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [0, 100, 200, 500, 1000, 2000, 5000, 10000],
+                labels = [];
+
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+
+            return div;
+        };
+
+        legend.addTo(map);
+    </script>
 </body>
 </html>
