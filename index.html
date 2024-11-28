@@ -22,7 +22,7 @@
 </head>
 <body>
 <svg width="1000" height="600"></svg>
-<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script> 
 <script>
 let width = 1000, height = 600;
 let svg = d3.select("svg")
@@ -42,7 +42,9 @@ Promise.all([d3.json("sgmap.json"), d3.csv("population2023.csv")]).then(data => 
   // Map projection
   let projection = d3.geoMercator()
       .center([103.851959, 1.290270])
-      .fitExtent([[20, 20], [980, 580]], data[0]);
+      .scale(6000) // Increase the scale to zoom in
+      .translate([width / 2, height / 2]) // Center the map
+      .fitExtent([[20, 20], [980, 580]], data[0]); // Adjust fitExtent to fit the new scale
   let geopath = d3.geoPath().projection(projection);
   // Draw map
   svg.append("g")
