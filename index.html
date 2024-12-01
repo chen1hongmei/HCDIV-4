@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <title>Singapore Population Density Visualization</title>
   <style>
+    body {
+      background-color: rgb(167, 167, 239); /* 设置背景色为蓝色 */
+    }
     #districts path {
       stroke: black;
       stroke-width: 0.5;
@@ -18,78 +21,85 @@
       font-weight: bold;
       fill: black;
     }
+    .highlight {
+      stroke: yellow;
+      stroke-width: 2;
+    }
   </style>
 </head>
 <body>
-<svg></svg>
-<script src="https://d3js.org/d3.v7.min.js"></script> 
-<script>
-let width = 1000, height = 600;
-let svg = d3.select("svg")
-    .attr("viewBox", "0 0 " + width + " " + height);
-// Load external data and boot
-Promise.all([d3.json("sgmap.json"), d3.csv("population2023.csv")]).then(data => {
-  let mapData = data[0].features;
-  let popData = data[1];
-  // Merge population data with map data
-  mapData.forEach(d => {
-    let subzone = popData.find(e => e.Subzone.toUpperCase() == d.properties.Name);
-    d.properties.popdata = (subzone != undefined) ? parseInt(subzone.Population) : 0;
-  });
-  // Color scale for population density
-  const colorScale = d3.scaleSequential(d3.interpolateReds)
-    .domain([0, d3.max(mapData, d => d.properties.popdata)]);
-  // Map projection
-  let projection = d3.geoMercator()
-      .center([103.851959, 1.290270])
-      .scale(6000) // Increase the scale to zoom in
-      .translate([width / 2, height / 2]) // Center the map
-      .fitExtent([[20, 20], [980, 580]], data[0]); // Adjust fitExtent to fit the new scale
-  let geopath = d3.geoPath().projection(projection);
-  // Draw map
-  svg.append("g")
-      .attr("id", "districts")
-      .selectAll("path")
-      .data(mapData)
-      .enter()
-      .append("path")
-      .attr("d", geopath)
-      .attr("stroke", "black")
-      .attr("fill", d => colorScale(d.properties.popdata))
-      .on("mouseover", function(event, d) {
-        d3.select(this).attr("fill-opacity", 0.5);
-        d3.select("#info").text(`Subzone: ${d.properties.Name}, Population: ${d.properties.popdata}`);
-      })
-      .on("mouseout", function(event, d) {
-        d3.select(this).attr("fill-opacity", 0.8);
-        d3.select("#info").text("");
+  <h1 style="text-align: center;">Singapore Population Density Visualization</h1>
+  <h3 style="text-align: center;">Chen hongmei 1009615</h3>
+  <p style="text-indent: 4%;">This visualization shows the population density of different districts in Singapore. The color intensity represents the population density, with darker shades indicating higher populations.</p>
+  <svg></svg>
+  <script src="https://d3js.org/d3.v7.min.js"></script> 
+  <script>
+    let width = 1000, height = 600;
+    let svg = d3.select("svg")
+        .attr("viewBox", "0 0 " + width + " " + height);
+    // Load external data and boot
+    Promise.all([d3.json("sgmap.json"), d3.csv("population2023.csv")]).then(data => {
+      let mapData = data[0].features;
+      let popData = data[1];
+      // Merge population data with map data
+      mapData.forEach(d => {
+        let subzone = popData.find(e => e.Subzone.toUpperCase() == d.properties.Name);
+        d.properties.popdata = (subzone != undefined) ? parseInt(subzone.Population) : 0;
       });
-  // Add a legend
-  let legendWidth = 200, legendHeight = 20;
-  let legend = svg.append("g")
-      .attr("transform", "translate(20, 550)");
-  let legendScale = d3.scaleLinear()
-      .domain(colorScale.domain())
-      .range([0, legendWidth]);
-  let legendAxis = d3.axisBottom(legendScale).ticks(5);
-  legend.selectAll("rect")
-      .data(d3.range(legendWidth))
-      .enter()
-      .append("rect")
-      .attr("x", d => d)
-      .attr("y", 0)
-      .attr("width", 1)
-      .attr("height", legendHeight)
-      .attr("fill", d => colorScale(legendScale.invert(d)));
-  legend.append("g")
-      .attr("transform", `translate(0, ${legendHeight})`)
-      .call(legendAxis);
-  // Info box
-  svg.append("text")
-    .attr("id", "info")
-    .attr("x", 20)
-    .attr("y", 30);
-});
-</script>
+      // Color scale for population density
+      const colorScale = d3.scaleSequential(d3.interpolateReds)
+        .domain([0, d3.max(mapData, d => d.properties.popdata)]);
+      // Map projection
+      let projection = d3.geoMercator()
+          .center([103.851959, 1.290270])
+          .scale(6000) // Increase the scale to zoom in
+          .translate([width / 2, height / 2]) // Center the map
+          .fitExtent([[20, 20], [980, 580]], data[0]); // Adjust fitExtent to fit the new scale
+      let geopath = d3.geoPath().projection(projection);
+      // Draw map
+      svg.append("g")
+          .attr("id", "districts")
+          .selectAll("path")
+          .data(mapData)
+          .enter()
+          .append("path")
+          .attr("d", geopath)
+          .attr("stroke", "black")
+          .attr("fill", d => colorScale(d.properties.popdata))
+          .on("mouseover", function(event, d) {
+            d3.select(this).attr("fill-opacity", 0.5);
+            d3.select("#info").text(`Subzone: ${d.properties.Name}, Population: ${d.properties.popdata}`);
+          })
+          .on("mouseout", function(event, d) {
+            d3.select(this).attr("fill-opacity", 0.8);
+            d3.select("#info").text("");
+          });
+      // Add a legend
+      let legendWidth = 200, legendHeight = 20;
+      let legend = svg.append("g")
+          .attr("transform", "translate(20, 550)");
+      let legendScale = d3.scaleLinear()
+          .domain(colorScale.domain())
+          .range([0, legendWidth]);
+      let legendAxis = d3.axisBottom(legendScale).ticks(5);
+      legend.selectAll("rect")
+          .data(d3.range(legendWidth))
+          .enter()
+          .append("rect")
+          .attr("x", d => d)
+          .attr("y", 0)
+          .attr("width", 1)
+          .attr("height", legendHeight)
+          .attr("fill", d => colorScale(legendScale.invert(d)));
+      legend.append("g")
+          .attr("transform", `translate(0, ${legendHeight})`)
+          .call(legendAxis);
+      // Info box
+      svg.append("text")
+        .attr("id", "info")
+        .attr("x", 20)
+        .attr("y", 30);
+    });
+  </script>
 </body>
 </html>
